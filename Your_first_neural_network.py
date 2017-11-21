@@ -7,6 +7,7 @@
 
 # In[2]:
 
+
 get_ipython().magic('matplotlib inline')
 get_ipython().magic("config InlineBackend.figure_format = 'retina'")
 
@@ -21,12 +22,14 @@ import matplotlib.pyplot as plt
 
 # In[3]:
 
+
 data_path = 'Bike-Sharing-Dataset/hour.csv'
 
 rides = pd.read_csv(data_path)
 
 
 # In[4]:
+
 
 rides.head()
 
@@ -39,6 +42,7 @@ rides.head()
 
 # In[5]:
 
+
 rides[:24*10].plot(x='dteday', y='cnt')
 
 
@@ -47,6 +51,7 @@ rides[:24*10].plot(x='dteday', y='cnt')
 # 下面是一些分类变量，例如季节、天气、月份。要在我们的模型中包含这些数据，我们需要创建二进制虚拟变量。用 Pandas 库中的 `get_dummies()` 就可以轻松实现。
 
 # In[6]:
+
 
 dummy_fields = ['season', 'weathersit', 'mnth', 'hr', 'weekday']
 for each in dummy_fields:
@@ -67,6 +72,7 @@ data.head()
 
 # In[7]:
 
+
 quant_features = ['casual', 'registered', 'cnt', 'temp', 'hum', 'windspeed']
 # Store scalings in a dictionary so we can convert back later
 scaled_features = {}
@@ -81,6 +87,7 @@ for each in quant_features:
 # 我们将大约最后 21 天的数据保存为测试数据集，这些数据集会在训练完网络后使用。我们将使用该数据集进行预测，并与实际的骑行人数进行对比。
 
 # In[8]:
+
 
 # Save data for approximately the last 21 days 
 test_data = data[-21*24:]
@@ -97,6 +104,7 @@ test_features, test_targets = test_data.drop(target_fields, axis=1), test_data[t
 # 我们将数据拆分为两个数据集，一个用作训练，一个在网络训练完后用来验证网络。因为数据是有时间序列特性的，所以我们用历史数据进行训练，然后尝试预测未来数据（验证数据集）。
 
 # In[9]:
+
 
 # Hold out the last 60 days or so of the remaining data as a validation set
 train_features, train_targets = features[:-60*24], targets[:-60*24]
@@ -126,6 +134,7 @@ val_features, val_targets = features[-60*24:], targets[-60*24:]
 #   
 
 # In[10]:
+
 
 class NeuralNetwork(object):
     def __init__(self, input_nodes, hidden_nodes, output_nodes, learning_rate):
@@ -228,6 +237,7 @@ class NeuralNetwork(object):
 
 # In[11]:
 
+
 def MSE(y, Y):
     return np.mean((y-Y)**2)
 
@@ -237,6 +247,7 @@ def MSE(y, Y):
 # 运行这些单元测试，检查你的网络实现是否正确。这样可以帮助你确保网络已正确实现，然后再开始训练网络。这些测试必须成功才能通过此项目。
 
 # In[12]:
+
 
 import unittest
 
@@ -318,13 +329,14 @@ unittest.TextTestRunner().run(suite)
 # 
 # 隐藏节点越多，模型的预测结果就越准确。尝试不同的隐藏节点的数量，看看对性能有何影响。你可以查看损失字典，寻找网络性能指标。如果隐藏单元的数量太少，那么模型就没有足够的空间进行学习，如果太多，则学习方向就有太多的选择。选择隐藏单元数量的技巧在于找到合适的平衡点。
 
-# In[43]:
+# In[24]:
+
 
 import sys
 
 ### Set the hyperparameters here ###
-iterations = 3000
-learning_rate = 0.05
+iterations = 7600
+learning_rate = 0.5
 hidden_nodes = 30
 output_nodes = 1
 
@@ -349,27 +361,26 @@ for ii in range(iterations):
     losses['validation'].append(val_loss)
 
 
-# In[49]:
+# In[27]:
+
 
 plt.plot(losses['train'], label='Training loss')
 plt.plot(losses['validation'], label='Validation loss')
 plt.legend()
-_ = plt.ylim()
+_ = plt.ylim(ymax=0.4,ymin=0.1)
 
 
 # ## 检查预测结果
 # 
 # 使用测试数据看看网络对数据建模的效果如何。如果完全错了，请确保网络中的每步都正确实现。
 
-# In[48]:
+# In[28]:
+
 
 fig, ax = plt.subplots(figsize=(8,4))
 
 mean, std = scaled_features['cnt']
 predictions = network.run(test_features).T*std + mean
-print(network.run(test_features).T[0])
-print("=======================================")
-print(test_targets['cnt'].values)
 ax.plot(predictions[0], label='Prediction')
 ax.plot((test_targets['cnt']*std + mean).values, label='Data')
 ax.set_xlim(right=len(predictions))
@@ -392,6 +403,7 @@ _ = ax.set_xticklabels(dates[12::24], rotation=45)
 # 模型基本正确预测了数据变化的规律，但是在面对震荡幅度较小或较大的数据时候，并没有正确的匹配变化幅度，比如图中12月21日到12月30日。观察在数据处理阶段，data舍弃了工作日，假日等比较重要的输入，这可能是模型预测和真实数据差异的产生原因
 
 # In[ ]:
+
 
 
 
